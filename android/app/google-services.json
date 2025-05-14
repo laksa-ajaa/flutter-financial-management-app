@@ -1,0 +1,67 @@
+{
+  "project_info": {
+    "project_number": "333166504301",
+    "project_id": "financial-management-sys-a9548",
+    "storage_bucket": "financial-management-sys-a9548.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:333166504301:android:de66894ceec47493e79264",
+        "android_client_info": {
+          "package_name": "com.example.financial_management"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDolA6dVB6ZZ4ErshPNN2MJSLh1soWajEA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:333166504301:android:13079540db484be0e79264",
+        "android_client_info": {
+          "package_name": "com.example.financial_management_system"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDolA6dVB6ZZ4ErshPNN2MJSLh1soWajEA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:333166504301:android:c1ad46b523e92cd7e79264",
+        "android_client_info": {
+          "package_name": "com.example.manajemen_keuangan"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyDolA6dVB6ZZ4ErshPNN2MJSLh1soWajEA"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
