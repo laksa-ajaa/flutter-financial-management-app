@@ -61,20 +61,137 @@ class TransactionProvider with ChangeNotifier {
 
   Future<void> fetchTransactions(String userId) async {
     try {
+      print('Fetching transactions for userId: $userId'); // Debug log
+
+      // Option 1: Fetch without orderBy first, then sort in memory
       final snapshot =
           await _firestore
               .collection('transactions')
               .where('userId', isEqualTo: userId)
-              .orderBy('date', descending: true)
+              .get(); // Remove orderBy to avoid index requirement
+
+      print('Found ${snapshot.docs.length} transactions'); // Debug log
+
+      _transactions =
+          snapshot.docs
+              .map((doc) {
+                try {
+                  return model.Transaction.fromFirestore(doc);
+                } catch (e) {
+                  print('Error parsing transaction ${doc.id}: $e'); // Debug log
+                  return null;
+                }
+              })
+              .where((tx) => tx != null)
+              .cast<model.Transaction>()
+              .toList();
+
+      // Sort in memory instead of using orderBy in query
+      _transactions.sort((a, b) => b.date.compareTo(a.date));
+
+      print(
+        'Successfully parsed ${_transactions.length} transactions',
+      ); // Debug log
+
+      notifyListeners();
+    } catch (e) {
+      print('Error fetching transactions: $e'); // Debug log
+
+      // Fallback: Try alternative query method
+      try {
+        print('Trying alternative query method...'); // Debug log
+        await _fetchTransactionsAlternative(userId);
+      } catch (e2) {
+        print('Alternative query also failed: $e2'); // Debug log
+        rethrow;
+      }
+    }
+  }
+
+  // Alternative method using pagination or different query structure
+  Future<void> _fetchTransactionsAlternative(String userId) async {
+    try {
+      // Method 1: Use limit and multiple queries if needed
+      final snapshot =
+          await _firestore
+              .collection('transactions')
+              .where('userId', isEqualTo: userId)
+              .limit(100) // Limit to avoid large queries
               .get();
 
       _transactions =
           snapshot.docs
-              .map((doc) => model.Transaction.fromFirestore(doc))
+              .map((doc) {
+                try {
+                  return model.Transaction.fromFirestore(doc);
+                } catch (e) {
+                  print('Error parsing transaction ${doc.id}: $e');
+                  return null;
+                }
+              })
+              .where((tx) => tx != null)
+              .cast<model.Transaction>()
               .toList();
+
+      // Sort in memory
+      _transactions.sort((a, b) => b.date.compareTo(a.date));
 
       notifyListeners();
     } catch (e) {
+      rethrow;
+    }
+  }
+
+  // Method to fetch transactions with date range (more efficient)
+  Future<void> fetchTransactionsByDateRange(
+    String userId, {
+    DateTime? startDate,
+    DateTime? endDate,
+  }) async {
+    try {
+      print('Fetching transactions by date range for userId: $userId');
+
+      var query = _firestore
+          .collection('transactions')
+          .where('userId', isEqualTo: userId);
+
+      // Add date filters if provided
+      if (startDate != null) {
+        query = query.where(
+          'date',
+          isGreaterThanOrEqualTo: firestore.Timestamp.fromDate(startDate),
+        );
+      }
+
+      if (endDate != null) {
+        query = query.where(
+          'date',
+          isLessThanOrEqualTo: firestore.Timestamp.fromDate(endDate),
+        );
+      }
+
+      final snapshot = await query.get();
+
+      _transactions =
+          snapshot.docs
+              .map((doc) {
+                try {
+                  return model.Transaction.fromFirestore(doc);
+                } catch (e) {
+                  print('Error parsing transaction ${doc.id}: $e');
+                  return null;
+                }
+              })
+              .where((tx) => tx != null)
+              .cast<model.Transaction>()
+              .toList();
+
+      // Sort in memory
+      _transactions.sort((a, b) => b.date.compareTo(a.date));
+
+      notifyListeners();
+    } catch (e) {
+      print('Error fetching transactions by date range: $e');
       rethrow;
     }
   }
@@ -120,5 +237,17 @@ class TransactionProvider with ChangeNotifier {
     } catch (e) {
       rethrow;
     }
+  }
+
+  // Method to clear transactions (useful for logout)
+  void clearTransactions() {
+    _transactions.clear();
+    notifyListeners();
+  }
+
+  // Method to refresh data
+  Future<void> refreshTransactions(String userId) async {
+    _transactions.clear();
+    await fetchTransactions(userId);
   }
 }

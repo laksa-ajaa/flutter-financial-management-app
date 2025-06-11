@@ -15,6 +15,11 @@ class FinanceApp extends StatelessWidget {
       theme: appTheme,
       home: Consumer<AuthProvider>(
         builder: (ctx, authProvider, _) {
+          // Show loading while checking auth state
+          if (authProvider.userId.isEmpty && authProvider.isAuth == false) {
+            return const AuthScreen();
+          }
+
           return authProvider.isAuth ? const HomeScreen() : const AuthScreen();
         },
       ),

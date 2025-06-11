@@ -2,14 +2,30 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:manajemen_keuangan/models/user.dart' as app_user;
+import '../models/category.dart';
+import '../utils/theme.dart';
 
 class AuthProvider with ChangeNotifier {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
   User? _user;
 
+  AuthProvider() {
+    // Check if user is already logged in when app starts
+    _auth.authStateChanges().listen((User? user) {
+      _user = user;
+      notifyListeners();
+    });
+  }
+
   bool get isAuth => _user != null;
   String get userId => _user?.uid ?? '';
+
+  // Add method to check current user
+  Future<void> checkAuthState() async {
+    _user = _auth.currentUser;
+    notifyListeners();
+  }
 
   Future<void> signUp(String email, String password, String name) async {
     try {
@@ -57,50 +73,21 @@ class AuthProvider with ChangeNotifier {
   }
 
   Future<void> _createDefaultCategories(String userId) async {
-    final defaultCategories = [
-      {
-        'name': 'Food',
-        'color': Colors.red.value,
-        'iconCodePoint': Icons.restaurant.codePoint,
-        'isDefault': true,
-      },
-      {
-        'name': 'Transportation',
-        'color': Colors.blue.value,
-        'iconCodePoint': Icons.directions_car.codePoint,
-        'isDefault': true,
-      },
-      {
-        'name': 'Entertainment',
-        'color': Colors.purple.value,
-        'iconCodePoint': Icons.movie.codePoint,
-        'isDefault': true,
-      },
-      {
-        'name': 'Bills',
-        'color': Colors.orange.value,
-        'iconCodePoint': Icons.receipt.codePoint,
-        'isDefault': true,
-      },
-      {
-        'name': 'Shopping',
-        'color': Colors.pink.value,
-        'iconCodePoint': Icons.shopping_bag.codePoint,
-        'isDefault': true,
-      },
-      {
-        'name': 'Salary',
-        'color': Colors.green.value,
-        'iconCodePoint': Icons.attach_money.codePoint,
-        'isDefault': true,
-      },
-    ];
-
     final batch = _firestore.batch();
 
-    for (final category in defaultCategories) {
+    // Use the helper class for default categories
+    final defaultCategories = CategoryHelper.getAllDefaultCategories();
+
+    for (final categoryData in defaultCategories) {
       final docRef = _firestore.collection('categories').doc();
-      batch.set(docRef, {...category, 'userId': userId});
+      batch.set(docRef, {
+        'name': categoryData['name'],
+        'color': categoryData['color'],
+        'iconCodePoint': (categoryData['icon'] as IconData).codePoint,
+        'isDefault': true,
+        'type': categoryData['type'],
+        'userId': userId,
+      });
     }
 
     await batch.commit();

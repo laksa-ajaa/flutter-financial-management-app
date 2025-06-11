@@ -2,27 +2,59 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../providers/transaction_provider.dart';
+import '../utils/theme.dart';
 
 class MonthlySummary extends StatelessWidget {
   const MonthlySummary({Key? key}) : super(key: key);
+
+  String _getIndonesianMonthYear(DateTime date) {
+    final months = [
+      'Januari',
+      'Februari',
+      'Maret',
+      'April',
+      'Mei',
+      'Juni',
+      'Juli',
+      'Agustus',
+      'September',
+      'Oktober',
+      'November',
+      'Desember',
+    ];
+
+    return '${months[date.month - 1]} ${date.year}';
+  }
 
   @override
   Widget build(BuildContext context) {
     final transactionProvider = Provider.of<TransactionProvider>(context);
     final now = DateTime.now();
-    
-    final totalIncome = transactionProvider.getTotalIncomeByMonth(now.year, now.month);
-    final totalExpense = transactionProvider.getTotalExpenseByMonth(now.year, now.month);
+
+    final totalIncome = transactionProvider.getTotalIncomeByMonth(
+      now.year,
+      now.month,
+    );
+    final totalExpense = transactionProvider.getTotalExpenseByMonth(
+      now.year,
+      now.month,
+    );
     final balance = totalIncome - totalExpense;
-    
+
     return Card(
-      margin: const EdgeInsets.all(16),
-      shape: RoundedRectangleBorder(
-        borderRadius: BorderRadius.circular(16),
-      ),
+      margin: const EdgeInsets.symmetric(horizontal: 16),
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
       elevation: 4,
-      child: Padding(
-        padding: const EdgeInsets.all(16.0),
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(20),
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [primaryColor, secondaryColor],
+          ),
+        ),
+        padding: const EdgeInsets.all(20.0),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -30,46 +62,79 @@ class MonthlySummary extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  DateFormat.yMMMM().format(now),
+                  _getIndonesianMonthYear(now),
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
+                    color: Colors.white,
                   ),
                 ),
-                const Icon(Icons.calendar_today),
+                Container(
+                  padding: const EdgeInsets.symmetric(
+                    horizontal: 12,
+                    vertical: 6,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white.withOpacity(0.2),
+                    borderRadius: BorderRadius.circular(20),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(
+                        Icons.calendar_today,
+                        color: Colors.white,
+                        size: 16,
+                      ),
+                      const SizedBox(width: 4),
+                      Text(
+                        'Bulanan',
+                        style: TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: 30),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 _buildSummaryItem(
                   context,
-                  'Income',
+                  'Pemasukan',
                   totalIncome,
                   Icons.arrow_upward,
                   Colors.green,
                 ),
+                Container(
+                  height: 50,
+                  width: 1,
+                  color: Colors.white.withOpacity(0.3),
+                ),
                 _buildSummaryItem(
                   context,
-                  'Expense',
+                  'Pengeluaran',
                   totalExpense,
                   Icons.arrow_downward,
                   Colors.red,
                 ),
               ],
             ),
-            const SizedBox(height: 16),
-            const Divider(),
-            const SizedBox(height: 16),
+            const SizedBox(height: 20),
+            const Divider(color: Colors.white30),
+            const SizedBox(height: 20),
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 const Text(
-                  'Balance',
+                  'Saldo',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
+                    color: Colors.white70,
                   ),
                 ),
                 Text(
@@ -79,9 +144,9 @@ class MonthlySummary extends StatelessWidget {
                     decimalDigits: 0,
                   ).format(balance),
                   style: TextStyle(
-                    fontSize: 18,
+                    fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    color: balance >= 0 ? Colors.green : Colors.red,
+                    color: balance >= 0 ? Colors.white : Colors.red.shade300,
                   ),
                 ),
               ],
@@ -97,41 +162,48 @@ class MonthlySummary extends StatelessWidget {
     String title,
     double amount,
     IconData icon,
-    Color color,
+    Color iconColor,
   ) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Row(
-          children: [
-            Icon(
-              icon,
-              color: color,
-              size: 16,
-            ),
-            const SizedBox(width: 4),
-            Text(
-              title,
-              style: TextStyle(
-                color: color,
-                fontWeight: FontWeight.bold,
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Container(
+                padding: const EdgeInsets.all(4),
+                decoration: BoxDecoration(
+                  color: iconColor.withOpacity(0.2),
+                  shape: BoxShape.circle,
+                ),
+                child: Icon(icon, color: iconColor, size: 16),
               ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 4),
-        Text(
-          NumberFormat.currency(
-            locale: 'id',
-            symbol: 'Rp ',
-            decimalDigits: 0,
-          ).format(amount),
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
+              const SizedBox(width: 6),
+              Text(
+                title,
+                style: const TextStyle(
+                  color: Colors.white70,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ],
           ),
-        ),
-      ],
+          const SizedBox(height: 8),
+          Text(
+            NumberFormat.currency(
+              locale: 'id',
+              symbol: 'Rp ',
+              decimalDigits: 0,
+            ).format(amount),
+            style: const TextStyle(
+              fontSize: 18,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+        ],
+      ),
     );
   }
 }

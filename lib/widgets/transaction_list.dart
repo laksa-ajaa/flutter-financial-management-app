@@ -6,9 +6,50 @@ import '../models/transaction.dart' as model;
 import '../providers/transaction_provider.dart';
 import '../providers/category_provider.dart';
 import '../screens/add_transaction_screen.dart';
+import '../utils/theme.dart';
 
 class TransactionList extends StatelessWidget {
   const TransactionList({Key? key}) : super(key: key);
+
+  String _getIndonesianDate(DateTime date) {
+    final now = DateTime.now();
+    final yesterday = DateTime(now.year, now.month, now.day - 1);
+
+    if (_isSameDay(date, now)) {
+      return 'Hari Ini';
+    } else if (_isSameDay(date, yesterday)) {
+      return 'Kemarin';
+    } else {
+      final days = [
+        'Minggu',
+        'Senin',
+        'Selasa',
+        'Rabu',
+        'Kamis',
+        'Jumat',
+        'Sabtu',
+      ];
+      final months = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'Mei',
+        'Jun',
+        'Jul',
+        'Agu',
+        'Sep',
+        'Okt',
+        'Nov',
+        'Des',
+      ];
+
+      final dayName = days[date.weekday % 7];
+      final monthName = months[date.month - 1];
+
+      return '$dayName, ${date.day} $monthName ${date.year}';
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,15 +62,19 @@ class TransactionList extends StatelessWidget {
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            const Icon(Icons.receipt_long, size: 80, color: Colors.grey),
+            Icon(Icons.receipt_long, size: 80, color: Colors.grey.shade300),
             const SizedBox(height: 16),
-            const Text(
-              'No transactions yet!',
-              style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+            Text(
+              'Belum ada transaksi!',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: secondaryColor,
+              ),
             ),
             const SizedBox(height: 8),
             const Text(
-              'Add your first transaction by tapping the + button.',
+              'Tambahkan transaksi pertama Anda dengan menekan tombol +.',
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
@@ -42,7 +87,14 @@ class TransactionList extends StatelessWidget {
                 );
               },
               icon: const Icon(Icons.add),
-              label: const Text('Add Transaction'),
+              label: const Text('Tambah Transaksi'),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: accentColor,
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 24,
+                  vertical: 12,
+                ),
+              ),
             ),
           ],
         ),
@@ -73,12 +125,27 @@ class TransactionList extends StatelessWidget {
           children: [
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: Text(
-                _formatDate(date),
-                style: const TextStyle(
-                  fontWeight: FontWeight.bold,
-                  fontSize: 16,
-                ),
+              child: Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 12,
+                      vertical: 6,
+                    ),
+                    decoration: BoxDecoration(
+                      color: primaryColor,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Text(
+                      _getIndonesianDate(date),
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                        color: Colors.white,
+                      ),
+                    ),
+                  ),
+                ],
               ),
             ),
             ...dayTransactions.map((tx) {
@@ -92,7 +159,7 @@ class TransactionList extends StatelessWidget {
               return Dismissible(
                 key: Key(tx.id),
                 background: Container(
-                  color: Colors.red,
+                  color: Colors.red.shade400,
                   alignment: Alignment.centerRight,
                   padding: const EdgeInsets.only(right: 20),
                   child: const Icon(Icons.delete, color: Colors.white),
@@ -103,18 +170,21 @@ class TransactionList extends StatelessWidget {
                     context: context,
                     builder:
                         (ctx) => AlertDialog(
-                          title: const Text('Delete Transaction'),
+                          title: const Text('Hapus Transaksi'),
                           content: const Text(
-                            'Are you sure you want to delete this transaction?',
+                            'Apakah Anda yakin ingin menghapus transaksi ini?',
                           ),
                           actions: [
                             TextButton(
                               onPressed: () => Navigator.of(ctx).pop(false),
-                              child: const Text('Cancel'),
+                              child: const Text('Batal'),
                             ),
                             TextButton(
                               onPressed: () => Navigator.of(ctx).pop(true),
-                              child: const Text('Delete'),
+                              child: const Text('Hapus'),
+                              style: TextButton.styleFrom(
+                                foregroundColor: Colors.red,
+                              ),
                             ),
                           ],
                         ),
@@ -127,28 +197,65 @@ class TransactionList extends StatelessWidget {
                     horizontal: 16,
                     vertical: 4,
                   ),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  elevation: 1,
                   child: ListTile(
-                    leading: CircleAvatar(
-                      backgroundColor: category.color,
-                      child: Icon(category.icon, color: Colors.white, size: 20),
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 16,
+                      vertical: 8,
                     ),
-                    title: Text(tx.name),
+                    leading: Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(
+                        color: category.color.withOpacity(0.2),
+                        shape: BoxShape.circle,
+                      ),
+                      child: Icon(
+                        category.icon,
+                        color: category.color,
+                        size: 24,
+                      ),
+                    ),
+                    title: Text(
+                      tx.name,
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
                     subtitle: Text(
                       tx.note.isNotEmpty ? tx.note : category.name,
-                    ),
-                    trailing: Text(
-                      NumberFormat.currency(
-                        locale: 'id',
-                        symbol: 'Rp ',
-                        decimalDigits: 0,
-                      ).format(tx.amount),
                       style: TextStyle(
-                        fontWeight: FontWeight.bold,
-                        color:
-                            tx.type == model.TransactionType.income
-                                ? Colors.green
-                                : Colors.red,
+                        color: Colors.grey.shade600,
+                        fontSize: 12,
                       ),
+                    ),
+                    trailing: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.end,
+                      children: [
+                        Text(
+                          NumberFormat.currency(
+                            locale: 'id',
+                            symbol: 'Rp ',
+                            decimalDigits: 0,
+                          ).format(tx.amount),
+                          style: TextStyle(
+                            fontWeight: FontWeight.bold,
+                            color:
+                                tx.type == model.TransactionType.income
+                                    ? Colors.green
+                                    : Colors.red,
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          DateFormat.Hm().format(tx.date),
+                          style: TextStyle(
+                            fontSize: 12,
+                            color: Colors.grey.shade500,
+                          ),
+                        ),
+                      ],
                     ),
                     onTap: () {
                       Navigator.of(context).push(
@@ -166,19 +273,6 @@ class TransactionList extends StatelessWidget {
         );
       },
     );
-  }
-
-  String _formatDate(DateTime date) {
-    final now = DateTime.now();
-    final yesterday = DateTime(now.year, now.month, now.day - 1);
-
-    if (_isSameDay(date, now)) {
-      return 'Today';
-    } else if (_isSameDay(date, yesterday)) {
-      return 'Yesterday';
-    } else {
-      return DateFormat.yMMMd().format(date);
-    }
   }
 
   bool _isSameDay(DateTime a, DateTime b) {
